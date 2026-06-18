@@ -10,21 +10,32 @@ from datetime import date
 import pandas as pd
 import streamlit as st
 
-from lib import db, ml, ui
+from lib import config, db, icons, ui
 
 
 def render() -> None:
     user = ui.current_user()
     user_id = int(user["user_id"])
 
-    st.title("📦 Input Stok")
-    st.caption("Catat pembelian barang. Tanggal habis diprediksi otomatis oleh AI.")
+    st.markdown(
+        """
+    <h1 style="margin:0;font-weight:700;
+        background:linear-gradient(90deg,#10b981,#14b8a6);
+        -webkit-background-clip:text;-webkit-text-fill-color:transparent">
+        Input Stok
+    </h1>
+    <p style="color:#64748b;font-size:0.85rem;margin-top:0.15rem">
+        Catat pembelian barang. Tanggal habis diprediksi otomatis oleh AI.
+    </p>
+    """,
+        unsafe_allow_html=True,
+    )
 
     items = db.get_items()
     item_map = {r.item_name: r for r in items.itertuples()}
 
-    NEW_ITEM = "➕ Item baru…"
-    NEW_CATEGORY = "➕ Kategori baru…"
+    NEW_ITEM = "+ Item baru…"
+    NEW_CATEGORY = "+ Kategori baru…"
 
     pilihan = st.selectbox("Nama Item", [NEW_ITEM, *item_map.keys()])
     is_new = pilihan == NEW_ITEM
@@ -85,7 +96,7 @@ def render() -> None:
                 )
 
         notes = st.text_area("Catatan (opsional)", placeholder="mis. beli di pasar")
-        submitted = st.form_submit_button("💾 Simpan & Prediksi", type="primary")
+        submitted = st.form_submit_button("Simpan & Prediksi", type="primary")
 
     if submitted:
         try:
@@ -148,8 +159,8 @@ def render() -> None:
         except Exception as exc:  # noqa: BLE001
             st.error(f"Gagal menyimpan: {exc}")
 
-    st.divider()
-    st.subheader("🧾 Pembelian Terbaru")
+    ui.gradient_divider()
+    ui.section_header(icons.icon_receipt(24), "Pembelian Terbaru")
     recent = db.get_recent_stock(user_id, limit=15)
     if recent.empty:
         st.info("Belum ada pembelian tercatat.")

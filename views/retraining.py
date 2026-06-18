@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 import streamlit as st
 
-from lib import db, ml, ui
+from lib import config, db, icons, ml, ui
 
 SCHEDULE_OPTIONS = {
     "manual": "Manual",
@@ -37,12 +37,12 @@ def _due_banner(log: pd.DataFrame) -> None:
             due = trained_at + SCHEDULE_DELTA[sched]
             if datetime.now() >= due:
                 st.warning(
-                    f"⚠️ Retraining **{model_type}** ({SCHEDULE_OPTIONS[sched]}) "
-                    f"sudah jatuh tempo (terakhir {trained_at:%d %b %Y})."
+                    f"{icons.icon_alert_triangle(16)} Retraining **{model_type}** ({SCHEDULE_OPTIONS[sched]}) "
+                    f"jatuh tempo hari ini ({due:%d %b %Y})."
                 )
             else:
                 st.success(
-                    f"✅ Model **{model_type}** terkini. Jadwal berikutnya: {due:%d %b %Y}."
+                    f"{icons.icon_check_circle(16)} Model **{model_type}** terkini. Jadwal berikutnya: {due:%d %b %Y}."
                 )
 
 
@@ -50,13 +50,24 @@ def render() -> None:
     user = ui.current_user()
     user_id = int(user["user_id"])
 
-    st.title("🤖 Retraining Model")
-    st.caption("Latih ulang model dari data pengguna terbaru & pantau performanya.")
+    st.markdown(
+        """
+    <h1 style="margin:0;font-weight:700;
+        background:linear-gradient(90deg,#10b981,#14b8a6);
+        -webkit-background-clip:text;-webkit-text-fill-color:transparent">
+        Retraining Model
+    </h1>
+    <p style="color:#64748b;font-size:0.85rem;margin-top:0.15rem">
+        Latih ulang model dari data pengguna terbaru &amp; pantau performanya.
+    </p>
+    """,
+        unsafe_allow_html=True,
+    )
 
     log = db.get_training_log()
     _due_banner(log)
 
-    st.divider()
+    ui.gradient_divider()
     col1, col2 = st.columns([1, 2])
     with col1:
         schedule = st.selectbox(
@@ -70,14 +81,14 @@ def render() -> None:
 
     c1, c2, c3 = st.columns(3)
     with c1:
-        run_fc = st.button("🔄 Retrain Forecasting", width="stretch")
+        run_fc = st.button("Retrain Forecasting", width="stretch")
     with c2:
-        run_cls = st.button("🔄 Retrain Klasifikasi", width="stretch")
+        run_cls = st.button("Retrain Klasifikasi", width="stretch")
     with c3:
-        run_all = st.button("⚡ Retrain Keduanya", type="primary", width="stretch")
+        run_all = st.button("Retrain Keduanya", type="primary", width="stretch")
 
     if run_fc or run_all:
-        with st.spinner("Melatih ulang model forecasting..."):
+        with st.spinner("AI sedang melatih ulang model forecasting..."):
             try:
                 res = ml.retrain_forecasting(schedule=schedule, user_id=user_id)
                 st.success(
@@ -88,7 +99,7 @@ def render() -> None:
                 st.error(f"Gagal retrain forecasting: {exc}")
 
     if run_cls or run_all:
-        with st.spinner("Melatih ulang model klasifikasi..."):
+        with st.spinner("AI sedang melatih ulang model klasifikasi..."):
             try:
                 res = ml.retrain_classification(schedule=schedule, user_id=user_id)
                 st.success(
@@ -101,15 +112,15 @@ def render() -> None:
     if run_fc or run_cls or run_all:
         log = db.get_training_log()
 
-    st.divider()
-    st.subheader("📈 Riwayat Performa Model")
+    ui.gradient_divider()
+    ui.section_header(icons.icon_bar_chart(24), "Riwayat Performa Model")
     if log.empty:
         st.info("Belum ada riwayat retraining.")
         return
 
     disp = log.copy()
     disp["trained_at"] = pd.to_datetime(disp["trained_at"]).dt.strftime("%d %b %Y %H:%M")
-    disp["is_active"] = disp["is_active"].map({True: "✅ Aktif", False: "—"})
+    disp["is_active"] = disp["is_active"].map({True: "Aktif", False: "—"})
     disp = disp.rename(columns={
         "model_type": "Tipe",
         "model_name": "Model",

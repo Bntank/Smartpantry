@@ -12,6 +12,7 @@ Halaman:
 import streamlit as st
 
 from lib import config, db
+from lib.styles import inject_global_css
 from views import dashboard, input_stok, input_keuangan, prediksi, retraining
 
 st.set_page_config(
@@ -21,18 +22,34 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# Inject CSS global (font Inter, glassmorphism cards, badges, dll.)
+inject_global_css()
+
 
 def _sidebar_user_selector() -> None:
     """Pemilih user aktif (dipakai semua halaman lewat session_state)."""
     with st.sidebar:
-        st.title(f"{config.APP_ICON} {config.APP_TITLE}")
-        st.caption("Sistem Prediksi & Manajemen Kebutuhan Rumah Tangga")
+        # ── Branding visual ──────────────────────────────────────
+        st.image("assets/sidebar_logo.png", use_container_width=True)
         st.divider()
 
-        if not db.ping():
-            st.error("Gagal terhubung ke database. Periksa file .env.")
+        # ── Status koneksi DB ────────────────────────────────────
+        if db.ping():
+            st.markdown(
+                '<span class="status-dot online"></span> Database terhubung',
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown(
+                '<span class="status-dot offline"></span> Database terputus '
+                "— periksa file .env",
+                unsafe_allow_html=True,
+            )
             st.stop()
 
+        st.divider()
+
+        # ── Pemilih pengguna ─────────────────────────────────────
         try:
             users = db.get_users()
         except Exception as exc:  # noqa: BLE001
@@ -51,7 +68,7 @@ def _sidebar_user_selector() -> None:
             st.session_state.get("user_id") in options else 0
 
         selected = st.selectbox(
-            "👤 Pilih Pengguna",
+            "Pilih Pengguna",
             options=options,
             index=default_idx,
             format_func=lambda uid: labels.get(uid, str(uid)),
@@ -71,15 +88,15 @@ def main() -> None:
     _sidebar_user_selector()
 
     pages = [
-        st.Page(dashboard.render, title="Dashboard", icon="📊",
+        st.Page(dashboard.render, title="Dashboard", icon=":material/dashboard:",
                 url_path="dashboard", default=True),
-        st.Page(input_stok.render, title="Input Stok", icon="📦",
+        st.Page(input_stok.render, title="Input Stok", icon=":material/inventory_2:",
                 url_path="input-stok"),
-        st.Page(input_keuangan.render, title="Input Keuangan", icon="💰",
+        st.Page(input_keuangan.render, title="Input Keuangan", icon=":material/account_balance_wallet:",
                 url_path="input-keuangan"),
-        st.Page(prediksi.render, title="Prediksi & Alert", icon="🔔",
+        st.Page(prediksi.render, title="Prediksi & Alert", icon=":material/notifications:",
                 url_path="prediksi-alert"),
-        st.Page(retraining.render, title="Retraining Model", icon="🤖",
+        st.Page(retraining.render, title="Retraining Model", icon=":material/model_training:",
                 url_path="retraining"),
     ]
     nav = st.navigation(pages, position="sidebar")

@@ -48,11 +48,11 @@ PRIORITY_LABEL_ID = {
 }
 
 PRIORITY_COLOR = {
-    "segera_beli": "#e74c3c",      # merah
-    "beli_minggu_ini": "#f39c12",  # oranye
-    "masih_aman": "#27ae60",       # hijau
-    "habis": "#7f1d1d",            # merah gelap
-    "unknown": "#95a5a6",          # abu
+    "segera_beli": "#f43f5e",      # Rose 500
+    "beli_minggu_ini": "#f59e0b",  # Amber 500
+    "masih_aman": "#14b8a6",       # Teal 500
+    "habis": "#991b1b",            # Red 800
+    "unknown": "#64748b",          # Slate 500
 }
 
 # Kategori transaksi keuangan yang ada di database
@@ -60,4 +60,4 @@ INCOME_CATEGORIES = ["gaji", "kiriman_ortu", "pemasukan_tambahan"]
 EXPENSE_CATEGORIES = ["kebutuhan_rumah_tangga", "transportasi", "hiburan", "lainnya"]
 
 APP_TITLE = "SmartPantry AI"
-APP_ICON = "🧺"
+APP_ICON = "assets/logo.png"
