@@ -37,7 +37,7 @@ def render() -> None:
     NEW_ITEM = "+ Item baru…"
     NEW_CATEGORY = "+ Kategori baru…"
 
-    pilihan = st.selectbox("Nama Item", [NEW_ITEM, *item_map.keys()])
+    pilihan = st.selectbox("Nama Item", [NEW_ITEM, *item_map.keys()], format_func=lambda x: x if x == NEW_ITEM else x.replace('_', ' ').title())
     is_new = pilihan == NEW_ITEM
     if is_new:
         st.info(
@@ -53,7 +53,8 @@ def render() -> None:
             with col1:
                 new_name = st.text_input("Nama Item Baru", placeholder="mis. Kopi Sachet")
                 kategori_pilih = st.selectbox(
-                    "Kategori", [*db.get_categories(), NEW_CATEGORY]
+                    "Kategori", [*db.get_categories(), NEW_CATEGORY],
+                    format_func=lambda x: x if x == NEW_CATEGORY else x.replace('_', ' ').title()
                 )
                 kategori_baru = st.text_input(
                     "Nama Kategori Baru",
@@ -120,14 +121,14 @@ def render() -> None:
                     avg_days_to_finish=int(avg_days),
                     avg_price=float(avg_price),
                 )
-                item_name_disp = nama
+                item_name_disp = nama.replace('_', ' ').title()
                 category = kategori
                 avg_days_ref = float(avg_days)
                 avg_price_ref = float(avg_price)
             else:
                 sel = item_map[pilihan]
                 item_id = int(sel.item_id)
-                item_name_disp = sel.item_name
+                item_name_disp = sel.item_name.replace('_', ' ').title()
                 category = sel.category
                 avg_days_ref = float(sel.avg_days_to_finish or 14)
                 avg_price_ref = float(sel.avg_price or price)
@@ -170,6 +171,7 @@ def render() -> None:
         disp["estimated_finish_date"] = pd.to_datetime(
             disp["estimated_finish_date"]
         ).dt.strftime("%d %b %Y")
+        disp["item_name"] = disp["item_name"].str.replace('_', ' ').str.title()
         disp = disp.rename(columns={
             "purchase_date": "Tgl Beli",
             "item_name": "Item",

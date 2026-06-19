@@ -102,8 +102,8 @@ def render() -> None:
         else:
             disp = pd.DataFrame(
                 {
-                    "Item": prio["item_name"].values,
-                    "Kategori": prio["category"].values,
+                    "Item": prio["item_name"].str.replace('_', ' ').str.title().values,
+                    "Kategori": prio["category"].str.replace('_', ' ').str.title().values,
                     "Perkiraan Habis": pd.to_datetime(
                         prio["estimated_finish_date"]
                     )
@@ -225,7 +225,7 @@ def render() -> None:
         else:
             for r in urgent.itertuples():
                 ui.notif_card(
-                    item_name=r.item_name,
+                    item_name=r.item_name.replace('_', ' ').title(),
                     priority=r.priority_label,
                     sisa_hari=r.sisa_hari,
                     tanggal=pd.to_datetime(r.estimated_finish_date).strftime(

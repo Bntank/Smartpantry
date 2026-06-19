@@ -21,6 +21,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+st.logo("assets/sidebar_logo.png")
 
 # Inject CSS global (font Inter, glassmorphism cards, badges, dll.)
 inject_global_css()
@@ -29,26 +30,6 @@ inject_global_css()
 def _sidebar_user_selector() -> None:
     """Pemilih user aktif (dipakai semua halaman lewat session_state)."""
     with st.sidebar:
-        # ── Branding visual ──────────────────────────────────────
-        st.image("assets/sidebar_logo.png", use_container_width=True)
-        st.divider()
-
-        # ── Status koneksi DB ────────────────────────────────────
-        if db.ping():
-            st.markdown(
-                '<span class="status-dot online"></span> Database terhubung',
-                unsafe_allow_html=True,
-            )
-        else:
-            st.markdown(
-                '<span class="status-dot offline"></span> Database terputus '
-                "— periksa file .env",
-                unsafe_allow_html=True,
-            )
-            st.stop()
-
-        st.divider()
-
         # ── Pemilih pengguna ─────────────────────────────────────
         try:
             users = db.get_users()
@@ -83,6 +64,20 @@ def _sidebar_user_selector() -> None:
             )
         st.divider()
 
+        # ── Status koneksi DB ────────────────────────────────────
+        if db.ping():
+            st.markdown(
+                '<span class="status-dot online"></span> Database terhubung',
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown(
+                '<span class="status-dot offline"></span> Database terputus '
+                "— periksa file .env",
+                unsafe_allow_html=True,
+            )
+            st.stop()
+
 
 def main() -> None:
     _sidebar_user_selector()
@@ -102,7 +97,6 @@ def main() -> None:
     nav = st.navigation(pages, position="sidebar")
 
     with st.sidebar:
-        st.divider()
         st.caption("Capstone CAMP Batch 4 · Data Science & GenAI")
 
     nav.run()

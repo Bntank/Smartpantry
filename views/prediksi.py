@@ -50,8 +50,8 @@ def render() -> None:
     with tab1:
         disp = pd.DataFrame(
             {
-                "Item": prio["item_name"].values,
-                "Kategori": prio["category"].values,
+                "Item": prio["item_name"].str.replace('_', ' ').str.title().values,
+                "Kategori": prio["category"].str.replace('_', ' ').str.title().values,
                 "Beli Terakhir": pd.to_datetime(prio["purchase_date"])
                 .dt.strftime("%d %b %Y")
                 .values,
@@ -213,7 +213,7 @@ def render() -> None:
                     status_icon = icons.icon_check_circle(16) if r.is_resolved else icons.icon_hourglass(16)
                     tanggal = pd.to_datetime(r.alert_date).strftime("%d %b %Y")
                     ui.notif_card(
-                        item_name=f"{status_icon} {r.item_name}",
+                        item_name=f"{status_icon} {r.item_name.replace('_', ' ').title()}",
                         priority=r.priority_label,
                         sisa_hari=r.estimated_days_left,
                         tanggal=tanggal,

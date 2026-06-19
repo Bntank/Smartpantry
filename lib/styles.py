@@ -40,9 +40,15 @@ def inject_global_css() -> None:
         background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
         border: 1px solid rgba(16, 185, 129, 0.15);
         border-radius: 16px;
-        padding: 1.25rem 1.5rem;
+        padding: 1.25rem 0.5rem;
         text-align: center;
         transition: transform 0.2s ease, box-shadow 0.2s ease;
+        height: 160px !important;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
     }
     .kpi-card:hover {
         transform: translateY(-3px);
@@ -50,10 +56,11 @@ def inject_global_css() -> None:
     }
     .kpi-icon  { font-size: 2rem; margin-bottom: 0.3rem; }
     .kpi-value {
-        font-size: 1.75rem; font-weight: 700;
+        font-size: 1.35rem; font-weight: 700;
         background: linear-gradient(90deg, #10b981, #14b8a6);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        white-space: nowrap;
     }
     .kpi-value.danger {
         background: linear-gradient(90deg, #f43f5e, #fb7185);
@@ -154,6 +161,29 @@ def inject_global_css() -> None:
     }
     .status-dot.online  { background: #10b981; box-shadow: 0 0 6px #10b981; }
     .status-dot.offline { background: #f43f5e; box-shadow: 0 0 6px #f43f5e; }
+
+    /* ── Memperbesar Logo Bawaan Streamlit (st.logo) ── */
+    [data-testid="stSidebarHeader"] {
+        padding-top: 1.5rem !important;
+        padding-bottom: 1.5rem !important;
+    }
+    /* Pastikan semua stLogo kembali ke ukuran kecil by default (terutama di area header/collapsed) */
+    .stLogo, [data-testid="stSidebarLogo"] {
+        height: 1.5rem !important;
+        max-height: 1.5rem !important;
+    }
+
+    /* HANYA perbesar logo jika ia berada di dalam sidebar yang terbuka */
+    [data-testid="stSidebar"][aria-expanded="true"] [data-testid="stSidebarLogo"], 
+    [data-testid="stSidebar"][aria-expanded="true"] .stLogo {
+        height: 3.5rem !important;
+        max-height: 3.5rem !important;
+        width: auto !important;
+        max-width: 85% !important;
+        object-fit: contain !important;
+        margin-bottom: 0.5rem !important;
+        display: block !important;
+    }
     </style>
     """,
         unsafe_allow_html=True,

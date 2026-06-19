@@ -52,7 +52,7 @@ def render() -> None:
                 if ttype == "expense"
                 else config.INCOME_CATEGORIES
             )
-            category = st.selectbox("Kategori", categories)
+            category = st.selectbox("Kategori", categories, format_func=lambda x: x.replace('_', ' ').title())
             description = st.text_area("Deskripsi (opsional)")
 
         submitted = st.form_submit_button(
@@ -157,6 +157,7 @@ def render() -> None:
         disp["transaction_type"] = disp["transaction_type"].map(
             {"income": "Pemasukan", "expense": "Pengeluaran"}
         )
+        disp["category"] = disp["category"].str.replace('_', ' ').str.title()
         disp = disp.rename(
             columns={
                 "log_date": "Tanggal",
