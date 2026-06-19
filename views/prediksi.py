@@ -27,7 +27,8 @@ def render() -> None:
         Prediksi &amp; Alert
     </h1>
     <p style="color:#64748b;font-size:0.85rem;margin-top:0.15rem">
-        Prioritas beli mempertimbangkan pola konsumsi &amp; kondisi finansial.
+        Prioritas menggabungkan perkiraan sisa hari (forecasting)
+        dan model klasifikasi (pola konsumsi &amp; kondisi keuangan).
     </p>
     """,
         unsafe_allow_html=True,

@@ -157,27 +157,55 @@ def _finance_context(user_id: int) -> dict:
     }
 
 
+def _label_from_days(d: float) -> str:
+    """Aturan label prioritas dari sisa hari / days_to_finish.
+
+    Selaras dengan jendela waktu pada view v_latest_stock (7 & 14 hari).
+    """
+    if d <= 7:
+        return "segera_beli"
+    if d <= 14:
+        return "beli_minggu_ini"
+    return "masih_aman"
+
+
+def _merge_priority(*labels: str) -> str:
+    """Gabungkan label prioritas; ambil yang paling mendesak.
+
+    Dipakai untuk menyelaraskan aturan sisa_hari (forecasting) dengan prediksi
+    model klasifikasi (keuangan & pola konsumsi) tanpa kontradiksi.
+    """
+    rank = {p: i for i, p in enumerate(config.PRIORITY_ORDER)}
+    valid = [lbl for lbl in labels if lbl in rank]
+    if not valid:
+        return "masih_aman"
+    return min(valid, key=lambda lbl: rank[lbl])
+
+
 def build_priority_table(user_id: int) -> pd.DataFrame:
     """Membangun tabel prioritas beli untuk semua item terakhir milik user.
 
-    Menggabungkan forecasting (estimasi hari habis) dan klasifikasi
-    (label prioritas mempertimbangkan kondisi finansial).
+    Menggabungkan dua sumber:
+    - Aturan sisa_hari dari forecasting (≤7 / ≤8–14 / >14 hari).
+    - Model klasifikasi XGBoost (pola konsumsi + kondisi keuangan).
+
+    Hasil akhir = prioritas paling mendesak dari keduanya, sehingga tanggal
+    habis tetap dihormati (tidak bisa Masih Aman saat sisa_hari ≤7) sementara
+    model keuangan tetap bisa menaikkan urgensi saat stok masih panjang.
+
+    Item yang perkiraan habisnya sudah lewat hari ini disembunyikan dari
+    tampilan; data tetap ada di database.
     """
     latest = db.get_latest_stock_per_item(user_id)
     if latest.empty:
         return latest
 
-    user = db.get_user(user_id)
-    persona = user["persona_type"] if user is not None else None
     stats = db.get_personal_item_stats(user_id)
     fin = _finance_context(user_id)
     enc = get_encoders()
     models = load_models()
 
     df = latest.merge(stats, on="item_id", how="left")
-    # Fallback berlapis untuk item tanpa riwayat personal (mis. item baru):
-    # 1) rata-rata hari habis item itu sendiri (kolom referensi),
-    # 2) rata-rata per kategori, 3) rata-rata global.
     cat_mean = df.groupby("category")["avg_days_to_finish"].transform("mean")
     global_mean = float(df["avg_days_to_finish"].mean()) if not df.empty else 7.0
     df["avg_days_personal"] = (
@@ -200,12 +228,22 @@ def build_priority_table(user_id: int) -> pd.DataFrame:
 
     X = df[models["feat_classify"]].astype(float)
     pred_enc = models["classify"].predict(X)
-    df["priority_label"] = models["label_encoder"].inverse_transform(pred_enc)
+    df["ml_priority_label"] = models["label_encoder"].inverse_transform(pred_enc)
 
-    # Estimasi sisa hari relatif hari ini (untuk alert & tampilan)
     today = pd.Timestamp(date.today())
     est = pd.to_datetime(df["estimated_finish_date"])
     df["sisa_hari"] = (est - today).dt.days
+
+    has_finish = df["estimated_finish_date"].notna()
+    df = df[~has_finish | (df["sisa_hari"] >= 0)].copy()
+
+    df["rule_priority_label"] = df["sisa_hari"].apply(
+        lambda d: _label_from_days(float(d)) if pd.notna(d) else "masih_aman"
+    )
+    df["priority_label"] = df.apply(
+        lambda r: _merge_priority(r["rule_priority_label"], r["ml_priority_label"]),
+        axis=1,
+    )
 
     cols = [
         "item_id", "item_name", "category", "purchase_date", "quantity_bought",
@@ -222,18 +260,6 @@ def build_priority_table(user_id: int) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 # Retraining
 # ---------------------------------------------------------------------------
-def _label_from_days(d: float) -> str:
-    """Aturan label prioritas dari days_to_finish aktual.
-
-    Selaras dengan jendela waktu pada view v_latest_stock (7 & 14 hari).
-    Catatan: aturan ini asumsi yang terdokumentasi karena notebook training
-    tidak menyertakan definisi label eksplisit pada file model.
-    """
-    if d <= 7:
-        return "segera_beli"
-    if d <= 14:
-        return "beli_minggu_ini"
-    return "masih_aman"
 
 
 def _build_training_frame() -> pd.DataFrame:
