@@ -10,7 +10,7 @@ from datetime import date
 import pandas as pd
 import streamlit as st
 
-from lib import config, db, icons, ui
+from lib import config, db, icons, ml, ui
 
 
 def render() -> None:
