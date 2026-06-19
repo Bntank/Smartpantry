@@ -88,62 +88,60 @@ def render() -> None:
 
     ui.gradient_divider()
 
-    # ── Konten utama: Prioritas + Keuangan ───────────────────────
-    left, right = st.columns([3, 2])
-
-    # ---- Daftar prioritas beli ----
-    with left:
-        ui.section_header(icons.icon_shopping_cart(24), "Prioritas Belanja")
-        if prio.empty:
-            st.info(
-                "Belum ada data stok untuk pengguna ini. "
-                "Tambahkan di menu **Input Stok**."
-            )
-        else:
-            disp = pd.DataFrame(
-                {
-                    "Item": prio["item_name"].str.replace('_', ' ').str.title().values,
-                    "Kategori": prio["category"].str.replace('_', ' ').str.title().values,
-                    "Perkiraan Habis": pd.to_datetime(
-                        prio["estimated_finish_date"]
-                    )
-                    .dt.strftime("%d %b %Y")
-                    .values,
-                    "Sisa Hari": prio["sisa_hari"].values,
-                    "Prioritas": prio["priority_label"]
-                    .map(config.PRIORITY_LABEL_ID)
-                    .values,
-                }
-            )
-
-            color_by_text = {
-                config.PRIORITY_LABEL_ID[k]: v
-                for k, v in config.PRIORITY_COLOR.items()
-                if k in config.PRIORITY_LABEL_ID
+    # ── Konten utama: Prioritas Belanja ───────────────────────
+    ui.section_header(icons.icon_shopping_cart(24), "Prioritas Belanja")
+    if prio.empty:
+        st.info(
+            "Belum ada data stok untuk pengguna ini. "
+            "Tambahkan di menu **Input Stok**."
+        )
+    else:
+        disp = pd.DataFrame(
+            {
+                "Item": prio["item_name"].str.replace('_', ' ').str.title().values,
+                "Kategori": prio["category"].str.replace('_', ' ').str.title().values,
+                "Perkiraan Habis": pd.to_datetime(
+                    prio["estimated_finish_date"]
+                )
+                .dt.strftime("%d %b %Y")
+                .values,
+                "Sisa Hari": prio["sisa_hari"].values,
+                "Prioritas": prio["priority_label"]
+                .map(config.PRIORITY_LABEL_ID)
+                .values,
             }
+        )
 
-            def _color_row(row):
-                c = color_by_text.get(row["Prioritas"], "")
-                return [f"background-color: {c}18" if c else ""] * len(row)
+        color_by_text = {
+            config.PRIORITY_LABEL_ID[k]: v
+            for k, v in config.PRIORITY_COLOR.items()
+            if k in config.PRIORITY_LABEL_ID
+        }
 
-            st.dataframe(
-                disp.style.apply(_color_row, axis=1).format(
-                    {"Sisa Hari": "{:.0f}"}
+        def _color_row(row):
+            c = color_by_text.get(row["Prioritas"], "")
+            return [f"background-color: {c}18" if c else ""] * len(row)
+
+        st.dataframe(
+            disp.style.apply(_color_row, axis=1).format(
+                {"Sisa Hari": "{:.0f}"}
+            ),
+            width="stretch",
+            hide_index=True,
+            column_config={
+                "Sisa Hari": st.column_config.ProgressColumn(
+                    "Sisa Hari",
+                    min_value=0,
+                    max_value=30,
+                    format="%d hari",
                 ),
-                width="stretch",
-                hide_index=True,
-                column_config={
-                    "Sisa Hari": st.column_config.ProgressColumn(
-                        "Sisa Hari",
-                        min_value=0,
-                        max_value=30,
-                        format="%d hari",
-                    ),
-                },
-            )
+            },
+        )
 
-    # ---- Keuangan ----
-    with right:
+    st.markdown("<br>", unsafe_allow_html=True)
+    # ── Keuangan & Kategori ───────────────────────
+    left_chart, right_chart = st.columns(2)
+    with left_chart:
         ui.section_header(icons.icon_trending_up(24), "Tren Keuangan")
         if mf.empty:
             st.info("Belum ada data keuangan.")
@@ -187,10 +185,14 @@ def render() -> None:
                     trace.name = "Pengeluaran"
             st.plotly_chart(fig, use_container_width=True)
 
+    with right_chart:
+        ui.section_header(icons.icon_pie_chart(24), "Kategori Pengeluaran")
+        if mf.empty:
+            st.info("Belum ada data pengeluaran.")
+        else:
             ym = mf.iloc[-1]["bulan"]
             exp_cat = db.get_expense_by_category(user_id, ym)
             if not exp_cat.empty:
-                st.caption(f"Pengeluaran per kategori ({ym})")
                 fig2 = px.bar(
                     exp_cat,
                     x="total",
