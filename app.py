@@ -58,9 +58,23 @@ def _sidebar_user_selector() -> None:
 
         user = db.get_user(selected)
         if user is not None:
+            income_fmt = f"Rp{float(user['monthly_income']):,.0f}".replace(",", ".")
             st.markdown(
-                f"**Persona:** {user['persona_type']}  \n"
-                f"**Pemasukan/bln:** Rp{float(user['monthly_income']):,.0f}".replace(",", ".")
+                f"""
+                <div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); 
+                            padding: 0.85rem; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.15); 
+                            margin-top: 0.5rem; line-height: 1.6;">
+                    <div style="display: flex; color: #f8fafc; font-size: 0.95rem;">
+                        <span style="font-weight: 600; width: 120px;">Persona</span>
+                        <span>: {user['persona_type']}</span>
+                    </div>
+                    <div style="display: flex; color: #f8fafc; font-size: 0.95rem;">
+                        <span style="font-weight: 600; width: 120px;">Pemasukan/bln</span>
+                        <span>: <span style="font-weight: 700; color: #10b981;">{income_fmt}</span></span>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
             )
         st.divider()
 
